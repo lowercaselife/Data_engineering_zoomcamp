@@ -22,8 +22,8 @@ Ensure you have Docker installed.
 1.  **Configure Environment Variables**:
     Create a `.env` file in this directory (if it doesn't already exist) with the following content:
     ```env
-    PG_USER=postgres
-    PG_PASSWORD=postgres
+    PG_USER=root
+    PG_PASSWORD=root
     PG_HOST=pgdatabase
     PG_PORT=5432
     PG_DB=ny_taxi
