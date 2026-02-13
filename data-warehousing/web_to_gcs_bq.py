@@ -43,24 +43,18 @@ def gcs_to_bigquery(year, service):
         gcs_uri = f"gs://{BUCKET}/{gcs_path}"
         table_id = f"{DATASET}.{service}_tripdata"
 
-        # Truncate for first month (January), append for others
-        write_disposition = (
-            bigquery.WriteDisposition.WRITE_TRUNCATE
-            if i == 0
-            else bigquery.WriteDisposition.WRITE_APPEND
-        )
+
+        write_disposition = bigquery.WriteDisposition.WRITE_APPEND
 
         job_config = bigquery.LoadJobConfig(
             source_format=bigquery.SourceFormat.PARQUET,
             autodetect=True,
             write_disposition=write_disposition,
-        )
-
-        if write_disposition == bigquery.WriteDisposition.WRITE_APPEND:
-            job_config.schema_update_options = [
+            schema_update_options=[
                 bigquery.SchemaUpdateOption.ALLOW_FIELD_RELAXATION,
                 bigquery.SchemaUpdateOption.ALLOW_FIELD_ADDITION,
-            ]
+            ],
+        )
 
         load_job = client.load_table_from_uri(
             gcs_uri,
@@ -68,31 +62,8 @@ def gcs_to_bigquery(year, service):
             job_config=job_config,
         )
 
-        try:
-            load_job.result()  # Wait for the job to complete
-            print(
-                f"Loaded {load_job.output_rows} rows from {file_name} into {table_id}"
-            )
-        except Exception as e:
-            if (
-                "Schema does not match" in str(e)
-                and write_disposition == bigquery.WriteDisposition.WRITE_APPEND
-            ):
-                # If schema mismatch on append, truncate the table and retry
-                print(f"Schema mismatch on {file_name}, truncating and retrying...")
-                job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
-                job_config.schema_update_options = None
-                load_job = client.load_table_from_uri(
-                    gcs_uri,
-                    table_id,
-                    job_config=job_config,
-                )
-                load_job.result()
-                print(
-                    f"Loaded {load_job.output_rows} rows from {file_name} into {table_id}"
-                )
-            else:
-                raise
+        load_job.result()  # Wait for the job to complete
+        print(f"Loaded {load_job.output_rows} rows from {file_name} into {table_id}")
 
 
 gcs_to_bigquery("2019", "green")

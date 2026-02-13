@@ -49,7 +49,17 @@ def web_to_gcs(year, service):
         print(f"Local: {file_name}")
 
         # read it back into a parquet file
-        df = pd.read_csv(file_name, compression='gzip')
+        df = pd.read_csv(file_name, compression='gzip', dtype={'store_and_fwd_flag': 'str'})
+
+        # enforce types
+        df["VendorID"] = df["VendorID"].astype("Int64")
+        df["RatecodeID"] = df["RatecodeID"].astype("Int64")
+        df["PULocationID"] = df["PULocationID"].astype("Int64")
+        df["DOLocationID"] = df["DOLocationID"].astype("Int64")
+        df["passenger_count"] = df["passenger_count"].astype("Int64")
+        df["payment_type"] = df["payment_type"].astype("Int64")
+        if "trip_type" in df.columns:
+            df["trip_type"] = df["trip_type"].astype("Int64")
         file_name = file_name.replace('.csv.gz', '.parquet')
         df.to_parquet(file_name, engine='pyarrow')
         print(f"Parquet: {file_name}")
@@ -57,6 +67,10 @@ def web_to_gcs(year, service):
         # upload it to gcs 
         upload_to_gcs(BUCKET, f"{service}/{file_name}", file_name)
         print(f"GCS: {service}/{file_name}")
+
+        # Cleanup local files
+        os.remove(file_name)
+        os.remove(file_name.replace('.parquet', '.csv.gz'))
 
 
 web_to_gcs('2019', 'green')
