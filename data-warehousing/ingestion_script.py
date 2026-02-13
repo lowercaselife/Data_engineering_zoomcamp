@@ -7,7 +7,7 @@ from google.api_core.exceptions import NotFound, Forbidden
 import time
 
 
-# Change this to your bucket name
+
 BUCKET_NAME = "dezoomcamp_hw3_2026"
 
 CREDENTIALS_FILE = "gcs.json"
